@@ -1,0 +1,51 @@
+<odoo>
+    <data>
+        <record id="cron_break_ean" model="ir.cron">
+            <field name="name">Break EAN to speed up import</field>
+            <field name="active" eval="False"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="model_id" ref="model_doit"/>
+            <field name="state">code</field>
+            <field name="code">model.break_ean()</field>
+        </record>
+
+        <record id="cron_ean_import" model="ir.cron">
+            <field name="name">Import EAN</field>
+            <field name="active" eval="False"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="model_id" ref="model_doit"/>
+            <field name="state">code</field>
+            <field name="code">model.import_with_sql()</field>
+        </record>
+
+        <record id="cron_details_import" model="ir.cron">
+            <field name="name">Import product details</field>
+            <field name="active" eval="False"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="model_id" ref="model_product_details"/>
+            <field name="state">code</field>
+            <field name="code">model.import_with_sql_details()</field>
+        </record>
+
+        <record id="cron_attribute_import" model="ir.cron">
+            <field name="name">Import product attributes</field>
+            <field name="active" eval="False"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="model_id" ref="model_product_attribute"/>
+            <field name="state">code</field>
+            <field name="code">model.import_attributes()</field>
+        </record>
+    </data>
+</odoo>

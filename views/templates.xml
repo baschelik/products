@@ -1,0 +1,108 @@
+<odoo>
+    <data>
+        <!-- explicit list view definition -->
+        <!-- With this view, generate custom presentation of tree view with fields chosen in tree section
+        <record model="ir.ui.view" id="products.list">
+            <field name="name">products list</field>
+            <field name="model">product.template</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="guid"/>
+                    <field name="ean"/>
+                    <field name="dimension"/>
+                    <field name="weight"/>
+                    <field name="default_code"/>
+                    <field name="type"/>
+                    <field name="list_price"/>
+                    <field name="active"/>
+                    <field name="categ_id"/>
+                </tree>
+            </field>
+        </record>-->
+
+        <!-- Extended form view for products, add custom fields
+        <record id="view_product_form_inherit" model="ir.ui.view">
+            <field name="name">product.template.common.form.inherit</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[1]" position="inside">
+                    <group>
+                        <field name="guid"/>
+                        <field name="ean"/>
+                        <field name="default_code"/>
+                        <field name="dimension"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>-->
+
+        <!-- actions opening views on models -->
+        <record model="ir.actions.act_window" id="product.action_window">
+            <field name="name">Products window</field>
+            <field name="res_model">product.template</field>
+            <field name="view_mode">tree,form</field>
+            <field name="limit">20</field>
+        </record>
+
+        <!--<record model="ir.actions.act_window" id="testing.action_window">
+            <field name="name">Testing</field>
+            <field name="res_model">product.template</field>
+            <field name="view_mode">tree,form</field>
+            <field name="limit">20</field>
+        </record>
+
+        <record model="ir.actions.act_window" id="product_details.action_window">
+            <field name="name">ProductProduct window</field>
+            <field name="res_model">product.details</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+
+
+         <record id="action_ean_import" model="ir.actions.server">
+            <field name="name">Make import</field>
+            <field name="condition">True</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_my_test" />
+            <field name="state">code</field>
+            <field name="code">self.test_act(cr, uid, context.get('active_ids', []), context=context)</field>
+        </record> -->
+
+        <!-- server action to the one above -->
+        <!--
+        <record model="ir.actions.server" id="products.action_server">
+          <field name="name">products server</field>
+          <field name="model_id" ref="model_products_products"/>
+          <field name="state">code</field>
+          <field name="code">
+            action = {
+              "type": "ir.actions.act_window",
+              "view_mode": "tree,form",
+              "res_model": self._name,
+            }
+          </field>
+        </record>
+        -->
+
+        <!-- Top menu item -->
+        <menuitem name="Products" id="products.menu_root"/>
+
+        <!-- menu categories -->
+        <!--
+        <menuitem name="Menu 1" id="products.menu_1" parent="products.menu_root"/>
+        <menuitem name="Menu 2" id="products.menu_2" parent="products.menu_root"/>
+        -->
+
+        <!-- actions -->
+
+        <menuitem name="Product List" id="products.menu_list" parent="products.menu_root"
+                  sequence="1" action="product.action_window"/>
+        <!--<menuitem name="ProductProduct" id="testing.menu_list" parent="products.menu_root"
+                sequence="2" action="testing.action_window"/>
+      <menuitem name="Server to list" id="products" parent="products.menu_2"
+                action="products.action_server"/>
+      -->
+    </data>
+</odoo>
