@@ -100,20 +100,10 @@ class Doit(models.Model):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         path = current_dir + '/../download/stamm_reifen.csv'
 
-        sql = "INSERT INTO product_product(barcode, default_code, guid, active) VALUES(%s, %s, %s, %s)"
+        sql = "INSERT INTO product_product(barcode, default_code, guid, active, product_tmpl_id) VALUES(%s, %s, %s, %s, %s)"
 
         reader = csv.reader(open(path, encoding='latin-1'), delimiter=';')
         header = next(reader)
-
-        type = 'product'
-
-        # product category - name Tyres, it is manually set, later should be found with query
-        # field that cannot be null
-        categ_id = self.get_category()
-        if not categ_id: raise UserError('Could not find category Tyres!')
-
-        uom_id = 1
-        uom_po_id = 1
 
         i = 0
 
@@ -121,18 +111,20 @@ class Doit(models.Model):
             i += 1
             # first, find id of product_template based on guid or store new product_template
             details_array = prepare_array(row, header)
-            prod_tmpl_id = self.find_or_store_one_in_template(details_array)
+            prod_tmpl_id = self.find_one_in_template(details_array['default_code'])
 
-
+            # if there is no product_template id with this articleNr
+            if not prod_tmpl_id:
+                prod_tmpl_id = self.store_one_in_template(details_array)
 
             active = True
             barcode = row[header.index('EAN')]
-            if barcode == '': active = False
             default_code = row[header.index('ArtikelNr')]
             guid = row[header.index('NR')]
+            if barcode == '': active = False
 
-            self.env.cr.execute(sql, (barcode, default_code, guid, active))
-            if i == 10: show_message("10 inserted")
+            self.env.cr.execute(sql, (barcode, default_code, guid, active, prod_tmpl_id))
+
         self.env.cr.commit()
 
         # self.env.invalidate_all()
@@ -151,11 +143,10 @@ class Doit(models.Model):
             return exists[0]
 
     @api.model
-    def find_or_store_one_in_template(self, details_array):
+    def store_one_in_template(self, details_array):
         default_code = details_array['default_code']
-
-        # check if default_code is in product_product
-        
+        name = details_array['name']
+        ean = details_array['ean']
 
         sql = "INSERT INTO product_template(name, default_code, type, categ_id, uom_id, uom_po_id, active) " \
               "VALUES(%s, %s, %s, %s, %s, %s, %s) RETURNING id"
@@ -163,19 +154,33 @@ class Doit(models.Model):
         type = 'product'
         categ_id = self.get_category()
         if not categ_id: raise UserError('Could not find category Tyres when saving product_template!')
-        uom_id = 1
-        uom_po_id = 1
-        active = True
-        name = details_array['name']
-        default_code = details_array['default_code']
+        uom_id = 1              # measure units, 1 is for units
+        uom_po_id = 1           # measure units, 1 is for units
+        if ean == '':
+            active = False
+        else:
+            active = True
 
         self.env.cr.execute(sql, (name, default_code, type, categ_id, uom_id, uom_po_id, active))
         self.env.cr.commit()
         return self.env.cr.fetchone()[0]
 
+    @api.model
+    def find_one_in_template(self, default_code):
+        # check if default_code is in product_product
+        sql = "SELECT id FROM product_template WHERE default_code = %s"
 
-def show_message(var):
-    raise UserError('variable is %s %s' % (var, type(var)))
+        self.env.cr.execute(sql, (default_code,))
+        result = self.env.cr.fetchone()
+
+        if result is None:
+            return False
+        else:
+            return result[0]
+
+
+def show_message(var, var2 = None):
+    raise UserError('variable is %s %s, second is %s %s' % (var, type(var), var2, type(var2)))
 
 def prepare_array(row, header):
     guid = row[header.index('NR')]
