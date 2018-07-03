@@ -22,6 +22,12 @@
             <field name="limit">20</field>
         </record>
 
+        <record model="ir.actions.act_window" id="products.action_window_operator">
+            <field name="name">Product Search Operators</field>
+            <field name="res_model">product.searchoperators</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
         <record id="criteria_form_view" model="ir.ui.view">
             <field name="name">criteria.form.view</field>
             <field name="model">product.importcriteria</field>
@@ -29,15 +35,18 @@
             <field name="arch" type="xml">
                 <form string="Insert new criteria:">
                     <header>
-                        <button string="Confirm" type="object" />
-                        <button string="Mark as done" type="object" />
-                        <button string="Reset to draft" type="object" />
+                        <button string="Confirm" type="object"/>
+                        <button string="Mark as done" type="object"/>
+                        <button string="Reset to draft" type="object"/>
                     </header>
                     <sheet>
-                        <label for="name" string="Enter name:"/><field name="name"/>
-                        <field name="operator"/>
-                        <field name="value"/>
-                        <field name="yesno"/>
+                        <group>
+                            <!--<field name="name"/>-->
+                            <field name="attribute"/>
+                            <field name="operator"/>
+                            <field name="value"/>
+                            <!--<field name="yesno"/>-->
+                        </group>
                     </sheet>
                 </form>
             </field>
@@ -49,10 +58,23 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree>
-                    <field name="name"/>
+                    <!--<field name="name"/>-->
+                    <field name="attribute"/>
                     <field name="operator"/>
                     <field name="value"/>
-                    <field name="yesno"/>
+                    <!--<field name="yesno"/>-->
+                </tree>
+            </field>
+        </record>
+
+        <record id="operatortree_view" model="ir.ui.view">
+            <field name="name">operator.tree.view</field>
+            <field name="model">product.searchoperators</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="description"/>
                 </tree>
             </field>
         </record>
@@ -82,6 +104,8 @@
                   sequence="2" action="products.action_window_product"/>
         <menuitem name="Product Import Criteria" id="products.menu_list_criteria" parent="products.menu_root"
                   sequence="3" action="products.action_window_criteria"/>
+        <menuitem name="Product Search operators" id="products.menu_list_operator" parent="products.menu_root"
+                  sequence="4" action="products.action_window_operator"/>
         <!--<menuitem name="Product Import Criteria" id="product.menu_list" parent="products.menu_root"
                 sequence="3"/>-->
 

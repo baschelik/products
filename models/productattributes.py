@@ -3,20 +3,12 @@
 from odoo import models, fields, api
 import logging
 import datetime
-from odoo.exceptions import UserError
-_logger = logging.getLogger(__name__)
+from odoo.exceptions import Warning
 
 
 class ProductAttributes(models.Model):
     _name = 'product.attribute'
     _inherit = 'product.attribute'
-    #
-    # yip = fields.Char()
-
-    @api.multi
-    def _do_it(self):
-        _logger.debug('This is FDS email parsing and through we can parse the mail from any email')
-
 
     # for overriding creation via GUI, adding custom fields and values
     # @api.model
@@ -27,22 +19,35 @@ class ProductAttributes(models.Model):
 
     @api.model
     def import_attributes(self):
-        columns = {'Gruppe', 'GruppeText', 'GruppeSymbol', 'EinsatzZweck', 'EinsatzZweckText', 'EinsatzZweckSymbol',
-                   'Dimension', 'Breite', 'Hoehe', 'Bauart', 'Felge', 'LI', 'GI', 'Geschw', 'TT_TL', 'Hersteller',
-                   'HerstellerText', 'HerstellerSymbol','Profil', 'ProfilText', 'ProfilSymbol', 'LagerHoehe', 'Gewicht'}
+        columns = {'Gruppe', 'GruppeText', 'GruppeSymbol', 'EinsatzZweck', 'EinsatzZweckText', 'EinsatzZweckSymbol','EinsatzZweck2Text'
+                   'DIMENSION', 'BREITE', 'HOEHE', 'BAUART', 'FELGE', 'LI', 'GI', 'GESCHW', 'TT_TL', 'Hersteller',
+                   'HerstellerText', 'HerstellerSymbol','Profil', 'ProfilText', 'ProfilSymbol', 'LagerHoehe', 'Gewicht',
+                   'ArtikelInfo4', 'ArtikelInfo5', 'ArtikelInfo6', 'ArtikelInfo7', 'DA', 'DEM', 'FR', 'ML', 'XL',
+                   'AUSLAUF', 'DOT', 'PR', 'NOTLAUF1', 'Design1', 'Design2', 'Design3', 'Design4', 'Test1', 'Test2', 'Test3', 'Test4'}
         variant = True
         create_date = datetime.datetime.now()
         write_date = create_date
         create_uid = self._uid
         write_uid = create_uid
+        sqlFind = "SELECT id FROM product_attribute WHERE name = %s"
+        i = 0
 
         # raise UserError('current user is %s' % self._uid)
 
         for column in columns:
-            sql = "INSERT INTO product_attribute(name, create_variant, create_uid, create_date, write_uid, write_date) VALUES(%s, %s, %s, %s, %s, %s)"
-            self.env.cr.execute(sql, (column, variant, create_uid, create_date, write_uid, write_date))
+            # check if attribute name already exists
+            self.env.cr.execute(sqlFind, (column, ))
+            result = self.env.cr.fetchone()
 
-        self.env.cr.commit()
+            if result is None:
+                i += 1
+                sql = "INSERT INTO product_attribute(name, create_variant, create_uid, create_date, write_uid, write_date) VALUES(%s, %s, %s, %s, %s, %s)"
+                self.env.cr.execute(sql, (column, variant, create_uid, create_date, write_uid, write_date))
+                self.env.cr.commit()
+            else:
+                continue
+
+        raise Warning('Totally imported attributes %s' % i)
 
         # self.env['attributes'].create ({
         #     'name': 'Example'

@@ -107,7 +107,21 @@ class Doit(models.Model):
 
         i = 0
 
+        # get all the criterias from product_importcriteria table
+        sqlCriteria = "SELECT pa.name, ps.description, pi.value " \
+                      "FROM product_importcriteria pi, product_searchoperators ps, product_attribute pa " \
+                        "WHERE pi.attribute = pa.id AND pi.operator = ps.id"
+        self.env.cr.execute(sqlCriteria)
+        results = self.env.cr.fetchall()
+
         for row in reader:
+            # if no criteria stored, all records will be imported
+            if results is not None:
+                # there is some criteria, prepare it for importing sql order
+                check_row = self.run_filter_on_row(results, row, header)
+                if not check_row:
+                    continue
+
             i += 1
             # first, find id of product_template based on guid or store new product_template
             details_array = prepare_array(row, header)
@@ -115,17 +129,25 @@ class Doit(models.Model):
 
             # if there is no product_template id with this articleNr
             if not prod_tmpl_id:
+                # store one
                 prod_tmpl_id = self.store_one_in_template(details_array)
+                # store its attributes
+                ######################
 
-            active = True
-            barcode = row[header.index('EAN')]
-            default_code = row[header.index('ArtikelNr')]
-            guid = row[header.index('NR')]
-            if barcode == '':
-                active = False
-                barcode = None
 
-            self.env.cr.execute(sql, (barcode, default_code, guid, active, prod_tmpl_id))
+
+            show_message(not self.check_barcode('') or not self.check_GUID('B1C483B9584B0EA74333CF48FE215A62'))
+            # check if barcode exists in product_product table
+            if not self.check_barcode(row[header.index('EAN')]) or not self.check_GUID(row[header.index('NR')]):
+                active = True
+                barcode = row[header.index('EAN')]
+                default_code = row[header.index('ArtikelNr')]
+                guid = row[header.index('NR')]
+                if barcode == '':
+                    active = False
+                    barcode = None
+
+                self.env.cr.execute(sql, (barcode, default_code, guid, active, prod_tmpl_id))
 
         self.env.cr.commit()
 
@@ -150,20 +172,26 @@ class Doit(models.Model):
         name = details_array['name']
         ean = details_array['ean']
 
-        sql = "INSERT INTO product_template(name, default_code, type, categ_id, uom_id, uom_po_id, active) " \
-              "VALUES(%s, %s, %s, %s, %s, %s, %s) RETURNING id"
+        sql = "INSERT INTO product_template(name, default_code, type, categ_id, uom_id, uom_po_id, active, responsible_id, tracking, sale_line_warn, " \
+              "purchase_line_warn) " \
+              "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id"
 
         type = 'product'
         categ_id = self.get_category()
         if not categ_id: raise UserError('Could not find category Tyres when saving product_template!')
         uom_id = 1              # measure units, 1 is for units
         uom_po_id = 1           # measure units, 1 is for units
+        responsible_id = 1
+        tracking = 'none'
+        sale_line_warn = 'no-message'
+        purchase_line_warn = 'no-message'
+
         if ean == '':
             active = False
         else:
             active = True
 
-        self.env.cr.execute(sql, (name, default_code, type, categ_id, uom_id, uom_po_id, active))
+        self.env.cr.execute(sql, (name, default_code, type, categ_id, uom_id, uom_po_id, active, responsible_id, tracking, sale_line_warn, purchase_line_warn))
         self.env.cr.commit()
         return self.env.cr.fetchone()[0]
 
@@ -180,9 +208,80 @@ class Doit(models.Model):
         else:
             return result[0]
 
+    @api.model
+    def check_barcode(self, barcode):
+        if barcode == '':
+            return False
+        # check if default_code is in product_product
+        sql = "SELECT id FROM product_product WHERE barcode = %s"
 
-def show_message(var, var2 = None):
-    raise UserError('variable is %s %s, second is %s %s' % (var, type(var), var2, type(var2)))
+        self.env.cr.execute(sql, (barcode,))
+        result = self.env.cr.fetchone()
+
+        if result is None:
+            return False
+        else:
+            return True
+
+    @api.model
+    def check_GUID(self, GUID):
+        # check if default_code is in product_product
+        sql = "SELECT id FROM product_product WHERE default_code = %s"
+
+        self.env.cr.execute(sql, (GUID,))
+        result = self.env.cr.fetchone()
+
+        if result is None:
+            return False
+        else:
+            return True
+
+    @api.model
+    def run_filter_on_row(self, filters, row, header):
+        # create tuples of attributes which can be strings or int
+        intgroup = ('BREITE', )
+        stringgroup = ('Gruppe',)
+
+        # go through each filter
+        for filter in filters:
+            # get value from row under specific header field
+            row_name_value = row[header.index(filter[0])]
+            # if empty return false
+            if row_name_value == '':
+                return False
+            # get operator from filter
+            operator = filter[1]
+            # get value from filter
+            value = filter[2]
+            # check whether criteria name is int or string
+            if filter[0] in intgroup:
+                # try to cast value to int
+                try:
+                    int(row_name_value)
+                except:
+                    # if not possible, return false
+                    return False
+                # join in string value, operator and header name
+                operation = row_name_value + operator + value
+                try:
+                    # try to evaluate string expression
+                    eval(operation)
+                except:
+                    raise UserWarning('Problem with %s %s' % (operation, int(row_name_value)))
+                # string expression evaluates either true or false
+                if not eval(operation):
+                    return False
+            # checking if it is string
+            if filter[0] in stringgroup:
+                if operator == '==':
+                    if row_name_value != value:
+                        return False
+
+        return True
+
+
+def show_message(var, var2 = None, var3 = None):
+    raise UserError('variable is %s %s, second is %s %s, third is %s %s' % (var, type(var), var2, type(var2), var3, type(var3)))
 
 def prepare_array(row, header):
     guid = row[header.index('NR')]
