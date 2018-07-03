@@ -29,7 +29,7 @@ class ProductAttributes(models.Model):
     def import_attributes(self):
         columns = {'Gruppe', 'GruppeText', 'GruppeSymbol', 'EinsatzZweck', 'EinsatzZweckText', 'EinsatzZweckSymbol',
                    'Dimension', 'Breite', 'Hoehe', 'Bauart', 'Felge', 'LI', 'GI', 'Geschw', 'TT_TL', 'Hersteller',
-                   'HerstellerText', 'HerstellerSymbol','Profil', 'ProfilText', 'ProfilSymbol', 'LagerHoehe'}
+                   'HerstellerText', 'HerstellerSymbol','Profil', 'ProfilText', 'ProfilSymbol', 'LagerHoehe', 'Gewicht'}
         variant = True
         create_date = datetime.datetime.now()
         write_date = create_date

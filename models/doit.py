@@ -121,7 +121,9 @@ class Doit(models.Model):
             barcode = row[header.index('EAN')]
             default_code = row[header.index('ArtikelNr')]
             guid = row[header.index('NR')]
-            if barcode == '': active = False
+            if barcode == '':
+                active = False
+                barcode = None
 
             self.env.cr.execute(sql, (barcode, default_code, guid, active, prod_tmpl_id))
 

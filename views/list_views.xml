@@ -1,0 +1,32 @@
+<odoo>
+    <data>
+
+        <record model="ir.ui.view" id="product.template">
+            <field name="name">Product Template</field>
+            <field name="model">product.template</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="categ_id"/>
+                    <field name="weight"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- explicit list view definition -->
+        <!-- With this view, generate custom presentation of tree view with fields chosen in tree section-->
+        <record model="ir.ui.view" id="product.importcriteria">
+            <field name="name">Product Import Criteria</field>
+            <field name="model">product.importcriteria</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="operator"/>
+                    <field name="value"/>
+                    <field name="yesno"/>
+                </tree>
+            </field>
+        </record>
+    </data>
+</odoo>

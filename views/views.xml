@@ -2,17 +2,59 @@
     <data>
         <!-- actions opening views on models -->
         <record model="ir.actions.act_window" id="products.action_window">
-            <field name="name">Products window</field>
+            <field name="name">Product window</field>
             <field name="res_model">product.template</field>
             <field name="view_mode">tree,form</field>
             <field name="limit">20</field>
         </record>
 
-        <record model="ir.actions.act_window" id="product.action_window">
-            <field name="name">Testing</field>
+        <record model="ir.actions.act_window" id="products.action_window_product">
+            <field name="name">Product Product</field>
             <field name="res_model">product.product</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="limit">20</field>
+        </record>
+
+        <record model="ir.actions.act_window" id="products.action_window_criteria">
+            <field name="name">Product Import Criteria</field>
+            <field name="res_model">product.importcriteria</field>
             <field name="view_mode">tree,form</field>
             <field name="limit">20</field>
+        </record>
+
+        <record id="criteria_form_view" model="ir.ui.view">
+            <field name="name">criteria.form.view</field>
+            <field name="model">product.importcriteria</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Insert new criteria:">
+                    <header>
+                        <button string="Confirm" type="object" />
+                        <button string="Mark as done" type="object" />
+                        <button string="Reset to draft" type="object" />
+                    </header>
+                    <sheet>
+                        <label for="name" string="Enter name:"/><field name="name"/>
+                        <field name="operator"/>
+                        <field name="value"/>
+                        <field name="yesno"/>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="criteria_tree_view" model="ir.ui.view">
+            <field name="name">criteria.tree.view</field>
+            <field name="model">product.importcriteria</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="operator"/>
+                    <field name="value"/>
+                    <field name="yesno"/>
+                </tree>
+            </field>
         </record>
 
         <!-- Extended form view for products.products, add custom fields-->
@@ -29,12 +71,6 @@
             </field>
         </record>
 
-        <!--<record model="ir.actions.act_window" id="product_details.action_window">
-            <field name="name">ProductProduct window</field>
-            <field name="res_model">product.details</field>
-            <field name="view_mode">tree,form</field>
-        </record>-->
-
         <!-- Top menu item -->
         <menuitem name="Products" id="products.menu_root"/>
 
@@ -42,10 +78,12 @@
 
         <menuitem name="Product List" id="products.menu_list" parent="products.menu_root"
                   sequence="1" action="products.action_window"/>
-        <menuitem name="ProductProduct" id="product.menu_list" parent="products.menu_root"
-                sequence="2" action="product.action_window"/>
-      <!--<menuitem name="Server to list" id="products" parent="products.menu_2"
-                action="products.action_server"/>-->
+        <menuitem name="Product Product" id="products.menu_list_product" parent="products.menu_root"
+                  sequence="2" action="products.action_window_product"/>
+        <menuitem name="Product Import Criteria" id="products.menu_list_criteria" parent="products.menu_root"
+                  sequence="3" action="products.action_window_criteria"/>
+        <!--<menuitem name="Product Import Criteria" id="product.menu_list" parent="products.menu_root"
+                sequence="3"/>-->
 
     </data>
 </odoo>

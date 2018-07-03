@@ -1,6 +1,14 @@
 # -*- coding: utf-8 -*-
 from odoo import http
 
+# def get_partners():
+#     partners = http.request.env['res.partner']
+#     values = {
+#         'partners': partners.search([])
+#     }
+#     return http.request.render('eq_website_customerportal.accountDetail', values)
+
+
 # class Products(http.Controller):
 #     @http.route('/products/products/', auth='public')
 #     def index(self, **kw):
