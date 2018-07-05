@@ -9,11 +9,11 @@ class ProductProduct(models.Model):
     _name = 'product.product'
     _inherit = 'product.product'
     _sql_constraints = [
-        ('GUID', 'unique(guid)', 'GUID must be unique!'),
+        # ('GUID', 'unique(guid)', 'GUID must be unique!'),
         ('ArticleNr', 'unique(default_code)', 'ArticleNr must be unique!')
     ]
 
-    guid = fields.Char()
+    # guid = fields.Char()
 
 #     value = fields.Integer()
 #     value2 = fields.Float(compute="_value_pc", store=True)

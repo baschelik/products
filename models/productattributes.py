@@ -19,7 +19,7 @@ class ProductAttributes(models.Model):
 
     @api.model
     def import_attributes(self):
-        columns = {'Gruppe', 'GruppeText', 'GruppeSymbol', 'EinsatzZweck', 'EinsatzZweckText', 'EinsatzZweckSymbol','EinsatzZweck2Text'
+        columns = {'Gruppe', 'GruppeText', 'GruppeSymbol', 'EinsatzZweck', 'EinsatzZweckText', 'EinsatzZweckSymbol','EinsatzZweck2Text',
                    'DIMENSION', 'BREITE', 'HOEHE', 'BAUART', 'FELGE', 'LI', 'GI', 'GESCHW', 'TT_TL', 'Hersteller',
                    'HerstellerText', 'HerstellerSymbol','Profil', 'ProfilText', 'ProfilSymbol', 'LagerHoehe', 'Gewicht',
                    'ArtikelInfo4', 'ArtikelInfo5', 'ArtikelInfo6', 'ArtikelInfo7', 'DA', 'DEM', 'FR', 'ML', 'XL',

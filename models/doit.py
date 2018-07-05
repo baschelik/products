@@ -2,6 +2,7 @@ import csv
 import os
 from odoo import models, fields, api
 import logging
+import datetime
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -9,7 +10,7 @@ _logger = logging.getLogger(__name__)
 class Doit(models.Model):
     _name = "doit"
 
-    # zip = fields.Integer()
+    # with_ean = fields.Boolean()
 
     @api.model
     def break_ean(self):
@@ -100,7 +101,7 @@ class Doit(models.Model):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         path = current_dir + '/../download/stamm_reifen.csv'
 
-        sql = "INSERT INTO product_product(barcode, default_code, guid, active, product_tmpl_id) VALUES(%s, %s, %s, %s, %s)"
+        sql = "INSERT INTO product_product(barcode, default_code, active, product_tmpl_id) VALUES(%s, %s, %s, %s)"
 
         reader = csv.reader(open(path, encoding='latin-1'), delimiter=';')
         header = next(reader)
@@ -115,6 +116,8 @@ class Doit(models.Model):
         results = self.env.cr.fetchall()
 
         for row in reader:
+            # if i == 10:
+            #     show_message('Done 10 records')
             # if no criteria stored, all records will be imported
             if results is not None:
                 # there is some criteria, prepare it for importing sql order
@@ -131,23 +134,36 @@ class Doit(models.Model):
             if not prod_tmpl_id:
                 # store one
                 prod_tmpl_id = self.store_one_in_template(details_array)
+
+                # no EAN, skip to the next one
+                if not prod_tmpl_id:
+                    continue
+
                 # store its attributes
                 ######################
+                self.store_attributes(row, header, prod_tmpl_id)
 
 
-
-            show_message(not self.check_barcode('') or not self.check_GUID('B1C483B9584B0EA74333CF48FE215A62'))
             # check if barcode exists in product_product table
-            if not self.check_barcode(row[header.index('EAN')]) or not self.check_GUID(row[header.index('NR')]):
+            if not (self.check_barcode(row[header.index('EAN')]) and self.check_GUID(row[header.index('NR')])):
                 active = True
                 barcode = row[header.index('EAN')]
                 default_code = row[header.index('ArtikelNr')]
-                guid = row[header.index('NR')]
-                if barcode == '':
-                    active = False
-                    barcode = None
+                # guid = row[header.index('NR')]
 
-                self.env.cr.execute(sql, (barcode, default_code, guid, active, prod_tmpl_id))
+                # this part will have to be implemented in cron view form, so that user choose to import
+                # articles with or without EAN
+                ##############################################################################################
+                if barcode == '':
+                    # this is in case we want to store articles without EAN
+                    # active = False
+                    # barcode = None
+
+                    # this is in case we do not want to store articles without EAN
+                    continue
+                ###############################################################################################
+
+                self.env.cr.execute(sql, (barcode, default_code, active, prod_tmpl_id))
 
         self.env.cr.commit()
 
@@ -171,10 +187,11 @@ class Doit(models.Model):
         default_code = details_array['default_code']
         name = details_array['name']
         ean = details_array['ean']
+        guid = details_array['guid']
 
         sql = "INSERT INTO product_template(name, default_code, type, categ_id, uom_id, uom_po_id, active, responsible_id, tracking, sale_line_warn, " \
-              "purchase_line_warn) " \
-              "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id"
+              "purchase_line_warn, available_in_pos, guid) " \
+              "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id"
 
         type = 'product'
         categ_id = self.get_category()
@@ -185,15 +202,81 @@ class Doit(models.Model):
         tracking = 'none'
         sale_line_warn = 'no-message'
         purchase_line_warn = 'no-message'
+        available_in_pos = True
 
         if ean == '':
-            active = False
+            # no EAN, do not store it
+            return False
+        #     active = False
         else:
             active = True
 
-        self.env.cr.execute(sql, (name, default_code, type, categ_id, uom_id, uom_po_id, active, responsible_id, tracking, sale_line_warn, purchase_line_warn))
+        self.env.cr.execute(sql, (name, default_code, type, categ_id, uom_id, uom_po_id, active, responsible_id, tracking, sale_line_warn, purchase_line_warn, available_in_pos, guid))
         self.env.cr.commit()
         return self.env.cr.fetchone()[0]
+
+    @api.multi
+    def store_attributes(self, row, header, prod_tmpl_id):
+        for head in header:
+            sql = "SELECT id FROM product_attribute WHERE name = %s"
+
+            self.env.cr.execute(sql, (head,))
+            result = self.env.cr.fetchone()
+
+            create_date = datetime.datetime.now()
+            write_date = create_date
+            create_uid = self._uid
+            write_uid = create_uid
+            value_of_attribute = row[header.index(head)].strip()
+
+            if result is None:
+                continue
+            else:
+                # if cell in csv is empty, do not store attribute for product
+                if value_of_attribute == '':
+                    continue
+
+                # check if the attribute-value pair already exist
+                product_attribute_id = result[0]
+                self.env.cr.execute("SELECT id FROM product_attribute_value WHERE name = %s AND attribute_id = %s",
+                                    (value_of_attribute, product_attribute_id))
+
+                match_found = self.env.cr.fetchone()
+                if match_found is None:
+                    # storing in product_attribute_value table if match attribute-value is not found
+                    self.env.cr.execute(
+                        "INSERT INTO product_attribute_value(name, attribute_id, create_uid, create_date, write_uid, write_date) "
+                        "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+                        (value_of_attribute, product_attribute_id, create_uid, create_date, write_uid, write_date))
+                    self.env.cr.commit()
+
+                    # self.env['product_attribute_value'].create(
+                    #     {
+                    #         'name': value_of_attribute,
+                    #         'attribute_id': product_attribute_id,
+                    #      }
+                    # )
+                    # self.env.cr.commit()
+                    # show_message('tried')
+                    produ_attr_value_id = self.env.cr.fetchone()[0]
+                else:
+                    produ_attr_value_id = match_found[0]
+
+                # then store product_tmpl_id and attribute_id in table product_attribute_line
+                self.env.cr.execute(
+                    "INSERT INTO product_attribute_line(product_tmpl_id, attribute_id, create_uid, create_date, write_uid, write_date) "
+                    "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
+                    (prod_tmpl_id, product_attribute_id, create_uid, create_date, write_uid, write_date))
+                self.env.cr.commit()
+                prod_attr_line_id = self.env.cr.fetchone()[0]
+
+                # finally, store product_attribute_line_id and product_attribute_value_id
+                # in relation table product_attribute_line_product_attribute_value_rel
+                self.env.cr.execute("INSERT INTO product_attribute_line_product_attribute_value_rel (product_attribute_line_id, product_attribute_value_id) "
+                                    "VALUES (%s, %s)",
+                                    (prod_attr_line_id, produ_attr_value_id))
+                self.env.cr.commit()
+
 
     @api.model
     def find_one_in_template(self, default_code):
@@ -226,7 +309,7 @@ class Doit(models.Model):
     @api.model
     def check_GUID(self, GUID):
         # check if default_code is in product_product
-        sql = "SELECT id FROM product_product WHERE default_code = %s"
+        sql = "SELECT id FROM product_template WHERE guid = %s"
 
         self.env.cr.execute(sql, (GUID,))
         result = self.env.cr.fetchone()
