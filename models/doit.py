@@ -109,12 +109,12 @@ class Doit(models.Model):
         i = 0
 
         # get all the criterias from product_importcriteria table
-        sqlCriteria = "SELECT pa.name, ps.description, pi.value " \
-                      "FROM product_importcriteria pi, product_searchoperators ps, product_attribute pa " \
-                        "WHERE pi.attribute = pa.id AND pi.operator = ps.id"
+        sqlCriteria = "SELECT pa.name, ps.description, pav.name " \
+                      "FROM product_attribute pa, product_searchoperators ps, product_importcriteria pi, product_attribute_value pav " \
+                        "WHERE pi.attribute = pa.id AND pi.operator = ps.id AND pi.value = pav.id"
         self.env.cr.execute(sqlCriteria)
         results = self.env.cr.fetchall()
-
+        # show_message(results)
         for row in reader:
             # if i == 10:
             #     show_message('Done 10 records')

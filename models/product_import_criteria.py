@@ -14,7 +14,7 @@ class ProductImportCriteria(models.Model):
     # name = fields.Char()
     attribute = fields.Many2one('product.attribute', 'Attribute')
     operator = fields.Many2one('product.searchoperators', 'Operator')
-    value = fields.Char()
+    value = fields.Many2one('product.attribute.value', 'Value')
     # yesno = fields.Selection([('yes','Yes'), ('no','No')], string="Is this OK?")
 
     # @api.model
