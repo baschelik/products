@@ -202,7 +202,7 @@ class Doit(models.Model):
             # create_uid = self._uid
             # write_uid = create_uid
             # get the id of the stored attribute
-            product_attribute_id = self.env['product.attribute'].search([('name', '=', head)]).id
+            product_attribute_id = self.find_record_in_table('product.attribute','name', head)
 
             # if it does not exists, move to the other head
             if not product_attribute_id:
@@ -215,12 +215,7 @@ class Doit(models.Model):
                 #
                 # match_found = self.env.cr.fetchone()
 
-                match_found_id = self.env['product.attribute.value'].search(
-                    [
-                        ('name', '=', value_of_attribute),
-                        ('attribute_id', '=', product_attribute_id)
-                    ]
-                ).id
+                match_found_id = self.find_record_in_table2('product.attribute.value','name', 'attribute_id', value_of_attribute, product_attribute_id)
 
                 if not match_found_id:
                     # storing in product_attribute_value table if match attribute-value is not found
@@ -277,6 +272,26 @@ class Doit(models.Model):
         sql = "SELECT id FROM " + table + " WHERE " + field + " = %s"
 
         self.env.cr.execute(sql, (value,))
+        result = self.env.cr.fetchone()
+
+        if result is None:
+            return False
+        else:
+            return result[0]
+
+    @api.model
+    def find_record_in_table2(self, table, field, field2, value, value2):
+
+        # make sure there is no dot in table name
+        if '.' in table:
+            table = table.replace('.', '_')
+
+        # check if record exists on the basis of field and value
+        # result_id = self.env[table].search([(field,'=',value)]).id
+
+        sql = "SELECT id FROM " + table + " WHERE " + field + " = %s AND " + field2 + " = %s"
+
+        self.env.cr.execute(sql, (value,value2,))
         result = self.env.cr.fetchone()
 
         if result is None:
