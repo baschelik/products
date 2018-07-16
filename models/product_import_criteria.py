@@ -23,3 +23,18 @@ class ProductImportCriteria(models.Model):
     #     record = super(ProductImportCriteria, self).create(values)
     #     record['attribute'] = 20
     #     return record
+
+    def dosmt(self):
+        # function called by button in create import criteria
+        # returns a customable window to add new product
+        # drawback: it stores new import criteria automatically
+        return {
+            'name': 'My Add New Product Window',
+            'domain': [],
+            'res_model': 'product.template',
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'context': {},
+            'target': 'new',
+        }

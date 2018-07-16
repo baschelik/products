@@ -24,11 +24,11 @@ class ProductAttributes(models.Model):
                    'HerstellerText', 'HerstellerSymbol','Profil', 'ProfilText', 'ProfilSymbol', 'LagerHoehe', 'Gewicht',
                    'ArtikelInfo4', 'ArtikelInfo5', 'ArtikelInfo6', 'ArtikelInfo7', 'DA', 'DEM', 'FR', 'ML', 'XL',
                    'AUSLAUF', 'DOT', 'PR', 'NOTLAUF1', 'Design1', 'Design2', 'Design3', 'Design4', 'Test1', 'Test2', 'Test3', 'Test4'}
-        variant = True
-        create_date = datetime.datetime.now()
-        write_date = create_date
-        create_uid = self._uid
-        write_uid = create_uid
+        # variant = True
+        # create_date = datetime.datetime.now()
+        # write_date = create_date
+        # create_uid = self._uid
+        # write_uid = create_uid
         sqlFind = "SELECT id FROM product_attribute WHERE name = %s"
         i = 0
 
@@ -41,8 +41,17 @@ class ProductAttributes(models.Model):
 
             if result is None:
                 i += 1
-                sql = "INSERT INTO product_attribute(name, create_variant, create_uid, create_date, write_uid, write_date) VALUES(%s, %s, %s, %s, %s, %s)"
-                self.env.cr.execute(sql, (column, variant, create_uid, create_date, write_uid, write_date))
+                # this is much better way to store records
+                # since it populates fields automatically, like create_date, create_uid, etc.
+                self.env['product.attribute'].create(
+                        {
+                            'name': column,
+                            'create_variant': True
+                        }
+                    )
+
+                # sql = "INSERT INTO product_attribute(name, create_variant, create_uid, create_date, write_uid, write_date) VALUES(%s, %s, %s, %s, %s, %s)"
+                # self.env.cr.execute(sql, (column, variant, create_uid, create_date, write_uid, write_date))
                 self.env.cr.commit()
             else:
                 continue

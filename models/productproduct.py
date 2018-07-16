@@ -23,4 +23,10 @@ class ProductProduct(models.Model):
     def _do_it(self):
         _logger.debug('This is FDS email parsing and through we can parse the mail from any email')
 
+    # @api.model
+    # def create(self, values):
+    #     # raise UserWarning('values are %s' % values)
+    #     record = super(ProductTemplate, self).create(values)
+    #     return record
+
 

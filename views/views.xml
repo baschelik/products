@@ -35,7 +35,7 @@
             <field name="arch" type="xml">
                 <form string="Insert new criteria:">
                     <header>
-                        <button string="Confirm" type="object"/>
+                        <button string="Confirm" type="object" name="dosmt"/>
                         <button string="Mark as done" type="object"/>
                         <button string="Reset to draft" type="object"/>
                     </header>

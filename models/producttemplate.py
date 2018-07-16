@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
-
+from odoo.exceptions import UserError
 
 class ProductTemplate(models.Model):
     _name = 'product.template'
@@ -16,8 +16,23 @@ class ProductTemplate(models.Model):
 
     @api.model
     def create(self, values):
-        raise UserWarning('values are %s' % values)
+        # raise UserWarning('values are %s' % values)
         record = super(ProductTemplate, self).create(values)
-        record['attribute'] = 20
+        record['type'] = 'product'
+        categ_id = self.env['product.category'].search(
+            [
+                (
+                    'name',
+                    '=',
+                    'Tyres'
+                )
+            ]
+        ).id
+
+        if categ_id is False:
+            raise UserError('Category Tyres is not defined!')
+        record['categ_id'] = categ_id
+        record['list_price'] = 0
+
         return record
 
