@@ -185,6 +185,7 @@ class Doit(models.Model):
 
     @api.multi
     def store_attributes(self, row, header, prod_tmpl_id):
+
         for head in header:
             value_of_attribute = row[header.index(head)].strip()
 
@@ -234,17 +235,22 @@ class Doit(models.Model):
                     # self.env.cr.commit()
                     # show_message('tried')
                     # produ_attr_value_id = self.env.cr.fetchone()[0]
+
                     values = {
                             'name': value_of_attribute,
-                            'attribute_id': product_attribute_id,
+                            'attribute_id': product_attribute_id
                          }
-                    produ_attr_value_id = self.store_values_in_table('product.attribute.value', values)
+                    result = self.store_values_in_table('product.attribute.value', values)
+                    produ_attr_value_id = result.id
                 else:
                     produ_attr_value_id = match_found_id
 
                 # then store product_tmpl_id and attribute_id in table product_attribute_line
-                prod_attr_line_id = self.store_values_in_table('product.attribute.line', {'product_tmpl_id':prod_tmpl_id, 'attribute_id':product_attribute_id})
-                    # self.env.cr.execute(
+                try:
+                    prod_attr_line_id = self.store_values_in_table('product.attribute.line', {'product_tmpl_id':prod_tmpl_id, 'attribute_id':product_attribute_id})
+                except:
+                    raise UserWarning('Error with storing in product.attribute.line')
+                # self.env.cr.execute(
                 #     "INSERT INTO product_attribute_line(product_tmpl_id, attribute_id, create_uid, create_date, write_uid, write_date) "
                 #     "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
                 #     (prod_tmpl_id, product_attribute_id, create_uid, create_date, write_uid, write_date))
@@ -253,11 +259,14 @@ class Doit(models.Model):
 
                 # finally, store product_attribute_line_id and product_attribute_value_id
                 # in relation table product_attribute_line_product_attribute_value_rel
-                self.env.cr.execute(
-                    "INSERT INTO product_attribute_line_product_attribute_value_rel (product_attribute_line_id, product_attribute_value_id) "
-                    "VALUES (%s, %s)",
-                    (prod_attr_line_id.id, produ_attr_value_id))
-                self.env.cr.commit()
+                try:
+                    self.env.cr.execute(
+                        "INSERT INTO product_attribute_line_product_attribute_value_rel (product_attribute_line_id, product_attribute_value_id) "
+                        "VALUES (%s, %s)",
+                        (prod_attr_line_id.id, produ_attr_value_id))
+                    self.env.cr.commit()
+                except:
+                    raise UserWarning('Problem with %s %s' % (prod_attr_line_id.id, produ_attr_value_id))
 
     @api.multi
     def store_values_in_table(self, table, values):
