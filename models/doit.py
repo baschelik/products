@@ -259,6 +259,21 @@ class Doit(models.Model):
                     (prod_attr_line_id.id, produ_attr_value_id))
                 self.env.cr.commit()
 
+    @api.multi
+    def store_values_in_table(self, table, values):
+
+        # make sure there is no underscore in table name
+        if '_' in table:
+            table = table.replace('_', '.')
+
+        try:
+            record = self.env[table].create(values)
+            self.env.cr.commit()
+        except:
+            raise UserError('Probably duplicated GUID or default code!')
+
+        return record
+
     @api.model
     def find_record_in_table(self, table, field, value):
 
@@ -370,20 +385,25 @@ class Doit(models.Model):
 
         return True
 
-    @api.multi
-    def store_values_in_table(self, table, values):
+    @api.model
+    def get_category(self, name):
+        sql = 'SELECT id FROM product_category WHERE name = %s'
 
-        # make sure there is no underscore in table name
-        if '_' in table:
-            table = table.replace('_', '.')
-        
-        try:
-            record = self.env[table].create(values)
+        self.env.cr.execute(sql, (name,))
+        self.env.cr.commit()
+        result = self.env.cr.fetchone()
+
+        if result is None:
+            result = self.env['product.category'].create(
+                {
+                    'name': 'Tyres',
+                    'complete_name': 'Tyres'
+                }
+            )
             self.env.cr.commit()
-        except:
-            raise UserError('Probably duplicated GUID or default code!')
-
-        return record
+            return result.id
+        else:
+            return result[0]
 
 
 def show_message(var, var2=None, var3=None):
