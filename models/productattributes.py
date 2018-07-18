@@ -74,7 +74,17 @@ class ProductAttributes(models.Model):
         header = next(reader)
 
         for row in reader:
-            show_message(row, header)
+            for head in header:
+                attribute_exists = self.env['product.attribute'].search(
+                    [
+                        (
+                            'name',
+                            '=',
+                            head
+                        )
+                    ]
+                )
+                show_message(head, attribute_exists.name)
 
 
 def show_message(var, var2=None, var3=None):
