@@ -75,6 +75,7 @@ class ProductAttributes(models.Model):
 
         for row in reader:
             for head in header:
+                # does attribute exists in table product.attribute
                 attribute_exists = self.env['product.attribute'].search(
                     [
                         (
@@ -84,7 +85,14 @@ class ProductAttributes(models.Model):
                         )
                     ]
                 )
-                show_message(head, attribute_exists.name)
+
+                if not attribute_exists:
+                    # not found, move to the next column title
+                    continue
+                else:
+                    # found, store the attribute
+
+                    show_message(attribute_exists.id, head)
 
 
 def show_message(var, var2=None, var3=None):
