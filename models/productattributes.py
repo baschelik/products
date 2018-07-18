@@ -91,8 +91,45 @@ class ProductAttributes(models.Model):
                     continue
                 else:
                     # found, store the attribute
+                    value_of_attribute = row[header.index(head)].strip()
 
-                    show_message(attribute_exists.id, head)
+                    # if cell in csv is empty, do not store attribute for product
+                    if value_of_attribute == '':
+                        continue
+
+                    # check if the attribute-value pair already exist
+                    #########################################################################################
+                    match_found_id = self.env['product.attribute.value'].search(
+                        [
+                            (
+                                'name',
+                                '=',
+                                value_of_attribute
+                            ),
+                            (
+                                'attribute_id',
+                                '=',
+                                attribute_exists.id
+                            )
+                        ]
+                    )
+
+                    if not match_found_id:
+                        result = self.env['product.attribute.value'].create(
+                            {
+                                'name': value_of_attribute,
+                                'attribute_id': attribute_exists.id,
+                                'sequence': 0
+                            }
+                        )
+
+                        produ_attr_value_id = result.id
+                    else:
+                        continue
+                    #########################################################################################
+
+            self.env.cr.commit()
+            # show_message(attribute_exists.id, head)
 
 
 def show_message(var, var2=None, var3=None):
