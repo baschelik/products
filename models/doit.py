@@ -121,7 +121,10 @@ class Doit(models.Model):
 
         # check rows in csv against criteria
         for row in reader:
-
+            # i += 1
+            # if i == 1000:
+            #     self.env.cr.commit()
+            #     exit()
             # if no criteria stored, all records will be imported
             if criteria_results is not None:
                 # there is some criteria, run row through it
@@ -137,31 +140,64 @@ class Doit(models.Model):
                 continue
 
             # first, find id of product_template based on default_code or store new product_template
-            prod_tmpl_id = self.find_record_in_table('product.template', 'default_code', details_array['default_code'])
+            # prod_tmpl_id = self.find_record_in_table('product.template', 'default_code', details_array['default_code'])
+            prod_tmpl_id = self.env['product.template'].search(
+                [
+                    (
+                        'default_code',
+                        '=',
+                        details_array['default_code']
+                    )
+                ]
+            ).id
 
             # if there is no product_template id with this articleNr
             if not prod_tmpl_id:
                 # check also if there is record with guid
-                if not self.find_record_in_table('product_template', 'guid', details_array['guid']):
+                is_guid = self.env['product.template'].search(
+                    [
+                        (
+                            'guid',
+                            '=',
+                            details_array['guid']
+                        )
+                    ]
+                )
+                if not is_guid:
 
-                    # store one, automatically, record is stored in product_product too
-                    prod_tmpl_id = self.store_values_in_table('product_template', details_array)
+                    # create one, automatically, record is created in product_product too
+                    # but, wait for commit, do it at the end
+                    # could speed up the process of storing
+                    # prod_tmpl_id = self.store_values_in_table('product_template', details_array)
+                    prod_tmpl_id = self.env['product.template'].create(
+                        details_array
+                    )
 
                     # store its attributes
                     ######################
                     self.store_attributes(row, header, prod_tmpl_id.id)
+
 
                 else:
                     raise UserError('GUID %s found in table product_template, while default_code cannot be found!' % details_array['guid'])
 
             else:
                 # update the attributes
+                # maybe should the old attributes to be deleted
                 #######################
+                self.store_attributes(row, header, prod_tmpl_id)
 
                 # check if data in product_product is still the same
                 ####################################################
 
                 continue
+
+            # commit after 100 records
+            i += 1
+            if i == 100:
+                self.env.cr.commit()
+                i = 0
+
             # check if barcode exists in product_product table
         #     if not (self.check_barcode(row[header.index('EAN')]) and self.check_GUID(row[header.index('NR')])):
         #         barcode = row[header.index('EAN')].strip()
@@ -179,7 +215,7 @@ class Doit(models.Model):
         #         # self.env.cr.execute(sql, (barcode, default_code, active, prod_tmpl_id))
         # if i == 1:
         #     show_message('Entered')
-        # self.env.cr.commit()
+        self.env.cr.commit()
 
         # self.env.invalidate_all()
 
@@ -203,7 +239,16 @@ class Doit(models.Model):
             # create_uid = self._uid
             # write_uid = create_uid
             # get the id of the stored attribute
-            product_attribute_id = self.find_record_in_table('product.attribute','name', head)
+            # product_attribute_id = self.find_record_in_table('product.attribute','name', head)
+            product_attribute_id = self.env['product.attribute'].search(
+                [
+                    (
+                        'name',
+                        '=',
+                        head
+                    )
+                ]
+            )
 
             # if it does not exists, move to the other head
             if not product_attribute_id:
@@ -211,12 +256,30 @@ class Doit(models.Model):
             else:
                 # check if the attribute-value pair already exist
                 # product_attribute_id = result_id
+
                 # self.env.cr.execute("SELECT id FROM product_attribute_value WHERE name = %s AND attribute_id = %s",
                 #                     (value_of_attribute, product_attribute_id))
                 #
                 # match_found = self.env.cr.fetchone()
 
-                match_found_id = self.find_record_in_table2('product.attribute.value','name', 'attribute_id', value_of_attribute, product_attribute_id)
+                # match_found_id = self.find_record_in_table2('product.attribute.value','name', 'attribute_id', value_of_attribute, product_attribute_id)
+
+                # check if the attribute-value pair already exist
+                #########################################################################################
+                match_found_id = self.env['product.attribute.value'].search(
+                    [
+                        (
+                            'name',
+                            '=',
+                            value_of_attribute
+                        ),
+                        (
+                            'attribute_id',
+                            '=',
+                            product_attribute_id.id
+                        )
+                    ]
+                )
 
                 if not match_found_id:
                     # storing in product_attribute_value table if match attribute-value is not found
@@ -226,30 +289,63 @@ class Doit(models.Model):
                     #     (value_of_attribute, product_attribute_id, create_uid, create_date, write_uid, write_date))
                     # self.env.cr.commit()
 
-                    # self.env['product.attribute.value'].create(
-                    #     {
-                    #         'name': value_of_attribute,
-                    #         'attribute_id': product_attribute_id,
-                    #      }
-                    # )
+                    result = self.env['product.attribute.value'].create(
+                        {
+                            'name': value_of_attribute,
+                            'attribute_id': product_attribute_id.id,
+                            'sequence': 0
+                         }
+                    )
                     # self.env.cr.commit()
                     # show_message('tried')
                     # produ_attr_value_id = self.env.cr.fetchone()[0]
 
-                    values = {
-                            'name': value_of_attribute,
-                            'attribute_id': product_attribute_id
-                         }
-                    result = self.store_values_in_table('product.attribute.value', values)
+                    # values = {
+                    #         'name': value_of_attribute,
+                    #         'attribute_id': product_attribute_id
+                    #      }
+                    # result = self.store_values_in_table('product.attribute.value', values)
                     produ_attr_value_id = result.id
                 else:
-                    produ_attr_value_id = match_found_id
+                    produ_attr_value_id = match_found_id.id
+                #########################################################################################
 
-                # then store product_tmpl_id and attribute_id in table product_attribute_line
-                try:
-                    prod_attr_line_id = self.store_values_in_table('product.attribute.line', {'product_tmpl_id':prod_tmpl_id, 'attribute_id':product_attribute_id})
-                except:
-                    raise UserWarning('Error with storing in product.attribute.line')
+
+
+                # search for match between product_tmpl_id and attribute_id in product_attribute_line
+                # if it does not exists, create one
+                #####################################################################################
+                match_prod_attribute = self.env['product.attribute.line'].search(
+                    [
+                        (
+                            'product_tmpl_id',
+                            '=',
+                            prod_tmpl_id
+                        ),
+                        (
+                            'attribute_id',
+                            '=',
+                            product_attribute_id.id
+                        )
+                    ]
+                )
+
+                if not match_prod_attribute:
+                    # then store product_tmpl_id and attribute_id in table product_attribute_line
+                    try:
+                        # prod_attr_line_id = self.store_values_in_table('product.attribute.line', {'product_tmpl_id':prod_tmpl_id, 'attribute_id':product_attribute_id})
+                        prod_attr_line_id = self.env['product.attribute.line'].create(
+                            {
+                                'product_tmpl_id': prod_tmpl_id,
+                                'attribute_id': product_attribute_id.id
+                            }
+                        )
+                    except:
+                        raise UserWarning('Error with storing in product.attribute.line')
+                else:
+                    prod_attr_line_id = match_prod_attribute
+
+                #####################################################################################
                 # self.env.cr.execute(
                 #     "INSERT INTO product_attribute_line(product_tmpl_id, attribute_id, create_uid, create_date, write_uid, write_date) "
                 #     "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
@@ -259,14 +355,39 @@ class Doit(models.Model):
 
                 # finally, store product_attribute_line_id and product_attribute_value_id
                 # in relation table product_attribute_line_product_attribute_value_rel
-                try:
-                    self.env.cr.execute(
-                        "INSERT INTO product_attribute_line_product_attribute_value_rel (product_attribute_line_id, product_attribute_value_id) "
-                        "VALUES (%s, %s)",
-                        (prod_attr_line_id.id, produ_attr_value_id))
-                    self.env.cr.commit()
-                except:
-                    raise UserWarning('Problem with %s %s' % (prod_attr_line_id.id, produ_attr_value_id))
+
+                # search for match between product_tmpl_id and attribute_id in product_attribute_line
+                # if it does not exists, create one
+                #####################################################################################
+                self.env.cr.execute(
+                            "SELECT * FROM product_attribute_line_product_attribute_value_rel WHERE "
+                            "product_attribute_line_id = %s AND product_attribute_value_id = %s ",
+                            (prod_attr_line_id.id, produ_attr_value_id))
+
+                match_final = self.env.cr.fetchone()
+                if match_final is None:
+                    try:
+                        self.env.cr.execute(
+                            "INSERT INTO product_attribute_line_product_attribute_value_rel (product_attribute_line_id, product_attribute_value_id) "
+                            "VALUES (%s, %s)",
+                            (prod_attr_line_id.id, produ_attr_value_id))
+                        # self.env.cr.commit()
+                        # self.env['product.attribute.line.product.attribute.value.rel'].create(
+                        #     {
+                        #         'product_attribute_line_id': prod_attr_line_id.id,
+                        #         'product_attribute_value_id': produ_attr_value_id
+                        #     }
+                        # )
+
+                    except:
+                        raise UserWarning('Problem with %s %s' % (prod_attr_line_id.id, produ_attr_value_id))
+                else:
+                    continue
+
+
+
+        # self.env.cr.commit()
+
 
     @api.multi
     def store_values_in_table(self, table, values):

@@ -4,6 +4,9 @@ from odoo import models, fields, api
 import logging
 import datetime
 from odoo.exceptions import Warning
+from odoo.exceptions import UserError
+import csv
+import os
 
 
 class ProductAttributes(models.Model):
@@ -52,12 +55,28 @@ class ProductAttributes(models.Model):
 
                 # sql = "INSERT INTO product_attribute(name, create_variant, create_uid, create_date, write_uid, write_date) VALUES(%s, %s, %s, %s, %s, %s)"
                 # self.env.cr.execute(sql, (column, variant, create_uid, create_date, write_uid, write_date))
-                self.env.cr.commit()
+
             else:
                 continue
 
-        raise Warning('Totally imported attributes %s' % i)
+        self.env.cr.commit()
+        # raise Warning('Totally imported attributes %s' % i)
 
-        # self.env['attributes'].create ({
-        #     'name': 'Example'
-        # })
+        # when all the attributes are set, then should go through EAN CSV file
+        # ti import all the possible attributes vartiations
+
+        # get file
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        path = current_dir + '/../download/stamm_reifen.csv'
+
+        # prepare variables for reading
+        reader = csv.reader(open(path, encoding='latin-1'), delimiter=';')
+        header = next(reader)
+
+        for row in reader:
+            show_message(row, header)
+
+
+def show_message(var, var2=None, var3=None):
+    raise UserError(
+        'variable is %s %s, second is %s %s, third is %s %s' % (var, type(var), var2, type(var2), var3, type(var3)))

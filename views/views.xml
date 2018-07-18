@@ -81,16 +81,16 @@
 
         <!-- Extended form view for products.products, add custom fields-->
         <!--<record id="view_product_form_inherit" model="ir.ui.view">-->
-            <!--<field name="name">product.product.common.form.inherit</field>-->
-            <!--<field name="model">product.product</field>-->
-            <!--<field name="inherit_id" ref="product.product_normal_form_view"/>-->
-            <!--<field name="arch" type="xml">-->
-                <!--<xpath expr="//page[1]" position="inside">-->
-                    <!--<group>-->
-                        <!--<field name="guid"/>-->
-                    <!--</group>-->
-                <!--</xpath>-->
-            <!--</field>-->
+        <!--<field name="name">product.product.common.form.inherit</field>-->
+        <!--<field name="model">product.product</field>-->
+        <!--<field name="inherit_id" ref="product.product_normal_form_view"/>-->
+        <!--<field name="arch" type="xml">-->
+        <!--<xpath expr="//page[1]" position="inside">-->
+        <!--<group>-->
+        <!--<field name="guid"/>-->
+        <!--</group>-->
+        <!--</xpath>-->
+        <!--</field>-->
         <!--</record>-->
 
         <!-- Extended form view for products.template, add custom fields-->
@@ -107,6 +107,44 @@
             </field>
         </record>
 
+        <!--Status bar view-->
+        <record model="ir.ui.view" id="view_statusbar_form">
+            <field name="name">Statusbar</field>
+            <field name="model">statusbar.demo</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Workflow record">
+                    <!--The header tag is built to add buttons within. This puts them at the top -->
+                    <header>
+                        <button string="Set to concept" type="object" name="concept_progressbar"
+                                attrs="{'invisible': [('state', '=', 'concept')]}"/>
+                        <!--The oe_highlight class gives the button a red color when it is saved.
+                        It is usually used to indicate the expected behaviour. -->
+                        <button string="Set to started" type="object" name="started_progressbar" class="oe_highlight"
+                                attrs="{'invisible': [('state','!=','concept')]}"/>
+                        <button string="In progress" type="object" name="progress_progressbar"
+                                attrs="{'invisible': [('state','=','progress')]}"/>
+                        <button string="Done" type="object" name="done_progressbar"
+                                attrs="{'invisible': [('state','=','finished')]}"/>
+                        <!--This will create the statusbar, thanks to the widget. -->
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+         <!--The action -->
+        <record model="ir.actions.act_window" id="statusbar_example_action">
+            <field name="name">Create new record</field>
+            <field name="res_model">statusbar.demo</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form,tree</field>
+            <field name='view_id' ref='view_statusbar_form'/>
+        </record>
+
         <!-- Top menu item -->
         <menuitem name="Products" id="products.menu_root"/>
 
@@ -120,8 +158,13 @@
                   sequence="3" action="products.action_window_criteria"/>
         <menuitem name="Product Search operators" id="products.menu_list_operator" parent="products.menu_root"
                   sequence="4" action="products.action_window_operator"/>
+        <menuitem name="Statusbar" id="products.statusbar" parent="products.menu_root"
+                  sequence="5" action="statusbar_example_action"/>
         <!--<menuitem name="Product Import Criteria" id="product.menu_list" parent="products.menu_root"
                 sequence="3"/>-->
+        <!-- Here is how to add to menu item to odoo apps -->
+        <menuitem name="Product Import Criteria" id="products.criteria" parent="stock.menu_stock_inventory_control"
+                  sequence="5" action="products.action_window_criteria"/>
 
     </data>
 </odoo>

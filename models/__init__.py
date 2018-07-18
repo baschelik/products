@@ -8,3 +8,4 @@ from . import productattributes
 from . import product_import_criteria
 from . import product_search_operators
 from . import producttemplate
+from . import statusbar
