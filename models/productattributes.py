@@ -114,6 +114,7 @@ class ProductAttributes(models.Model):
                         ]
                     )
 
+                    # does not exist, store the pair: name of attribute and attribute_id
                     if not match_found_id:
                         result = self.env['product.attribute.value'].create(
                             {
@@ -122,13 +123,11 @@ class ProductAttributes(models.Model):
                                 'sequence': 0
                             }
                         )
-
-                        produ_attr_value_id = result.id
+                        self.env.cr.commit()
                     else:
                         continue
                     #########################################################################################
 
-            self.env.cr.commit()
             # show_message(attribute_exists.id, head)
 
 

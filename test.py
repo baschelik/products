@@ -1,14 +1,22 @@
-from downloadean import get_ean_csv
+#from downloadean import get_ean_csv
 # from downloadcsv import get_cartomak_csv
-from importean import do_ean_import
+#from importean import do_ean_import
 # import glob
-from import_initial import import_temp_basic_data
+#from import_initial import import_temp_basic_data
 # import models
 # from models import productsattr
-from models.productsattr import ProductAttr
-from smalltask import get_sql_credentials
+#from models.productsattr import ProductAttr
+#from smalltask import get_sql_credentials
+from tika import parser
 
-
+raw = parser.from_file('download/text.pdf')
+whole = str(raw['content'])
+rech_number_start = whole.find('Rechnungs-Nr. ')+14
+# print(rech_number_start)
+# exit()
+rech_number_end = whole.find('Ihre USt', rech_number_start)
+# print(whole[rech_number_start:rech_number_end])
+print(raw['content'])
 # path = get_cartomak_csv()
 # print(path)
 
